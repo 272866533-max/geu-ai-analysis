@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEU组织编制 · AI替代性四象限分析看板</title>
+<style>
+:root { --bg: #f5f7fa; --card: #fff; --text: #1a1a2e; --sub: #6b7280; --accent: #3b82f6; --green: #10b981; --amber: #f59e0b; --red: #ef4444; --border: #e5e7eb; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 24px; }
+.header { max-width: 1400px; margin: 0 auto 24px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.header .meta { color: var(--sub); font-size: 14px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto 24px; }
+.stat-card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); text-align: center; }
+.stat-card .num { font-size: 36px; font-weight: 700; }
+.stat-card .label { font-size: 13px; color: var(--sub); margin-top: 4px; }
+.stat-card .sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.container { max-width: 1400px; margin: 0 auto; }
+
+/* Chart grid */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.chart-card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+.chart-card.full { grid-column: 1 / -1; }
+.chart-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.chart-card h3 .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: #4f46e5; font-weight: 500; }
+
+/* Quadrant */
+.quadrant { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 2px solid var(--text); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.q1 { background: #dcfce7; } .q2 { background: #fef9c3; } .q3 { background: #dbeafe; } .q4 { background: #fee2e2; }
+.q-cell { padding: 16px; min-height: 200px; border: 1px solid #d1d5db; }
+.q-cell h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.q-cell .score { font-size: 12px; color: var(--sub); margin-bottom: 8px; }
+.q-cell ul { list-style: none; }
+.q-cell li { font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; }
+.q-cell li:last-child { border-bottom: none; }
+.q-cell .pos-name { font-weight: 500; }
+.q-cell .headcount { font-size: 12px; color: var(--sub); background: rgba(0,0,0,0.06); padding: 1px 8px; border-radius: 8px; }
+
+/* Axis labels */
+.axis-label { position: relative; }
+.container { max-width: 1400px; margin: 0 auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 8px; background: #f9fafb; border-bottom: 2px solid var(--border); font-weight: 600; }
+td { padding: 8px; border-bottom: 1px solid var(--border); }
+.bar-cell { display: flex; align-items: center; gap: 6px; }
+.bar { height: 18px; border-radius: 4px; min-width: 4px; transition: width 0.3s; }
+.bar-green { background: var(--green); } .bar-amber { background: var(--amber); } .bar-red { background: var(--red); } .bar-blue { background: var(--accent); }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.tag-green { background: #d1fae5; color: #065f46; }
+.tag-amber { background: #fef3c7; color: #92400e; }
+.tag-red { background: #fee2e2; color: #991b1b; }
+.tag-blue { background: #dbeafe; color: #1e40af; }
+
+.kpi-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.kpi-card { background: var(--card); border-radius: 12px; padding: 16px; border: 1px solid var(--border); }
+.kpi-card .title { font-size: 12px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-card .value { font-size: 24px; font-weight: 700; margin: 4px 0; }
+.kpi-card .desc { font-size: 12px; color: var(--sub); }
+
+.section-title { font-size: 20px; font-weight: 700; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+
+@media (max-width: 900px) {
+  .chart-grid { grid-template-columns: 1fr; }
+  .quadrant { grid-template-columns: 1fr; }
+  .kpi-group { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 GEU组织编制 · AI替代性四象限分析看板</h1>
+  <div class="meta">2026-06-02 · 数据来源：GOFO_编制表20260602 · 总编制数：1,138</div>
+</div>
+
+<div class="container">
+
+<!-- Top Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="num" style="color:var(--accent)">1,138</div>
+    <div class="label">总编制 (Headcount)</div>
+    <div class="sub">GEU全区域</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--green)">791</div>
+    <div class="label">在职 (Active)</div>
+    <div class="sub">填充率 69.5%</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--red)">330</div>
+    <div class="label">空编 (Vacancy)</div>
+    <div class="sub">空缺率 29.0%</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:var(--amber)">17</div>
+    <div class="label">在途 (Pipeline)</div>
+    <div class="sub">招聘进行中 1.5%</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="color:#8b5cf6">89%</div>
+    <div class="label">C类岗位占比</div>
+    <div class="sub">1,012 / 1,138 为C类（低复杂度）</div>
+  </div>
+</div>
+
+<!-- Section 1: Regional Overview -->
+<h2 class="section-title">🌍 区域编制总览</h2>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>区域编制分布 <span class="badge">headcount</span></h3>
+    <svg viewBox="0 0 400 280" style="width:100%; height:auto;">
+      <!-- Horizontal bar chart showing headcount by country -->
+      <rect x="0" y="0" width="100%" height="280" fill="none"/>
+      <text x="0" y="20" font-size="11" fill="#6b7280">FR 法国区</text>
+      <rect x="0" y="26" width="50%" height="22" rx="4" fill="#3b82f6" opacity="0.9"/>
+      <text x="52%" y="42" font-size="12" fill="#1a1a2e" font-weight="600">311 (27.3%)</text>
+      <text x="0" y="70" font-size="11" fill="#6b7280">IT 意大利区</text>
+      <rect x="0" y="76" width="28%" height="22" rx="4" fill="#10b981" opacity="0.9"/>
+      <text x="30%" y="92" font-size="12" fill="#1a1a2e" font-weight="600">172 (15.1%)</text>
+      <text x="0" y="120" font-size="11" fill="#6b7280">NL 荷兰区</text>
+      <rect x="0" y="126" width="27%" height="22" rx="4" fill="#f59e0b" opacity="0.9"/>
+      <text x="29%" y="142" font-size="12" fill="#1a1a2e" font-weight="600">168 (14.8%)</text>
+      <text x="0" y="170" font-size="11" fill="#6b7280">ES 西班牙区</text>
+      <rect x="0" y="176" width="13%" height="22" rx="4" fill="#ef4444" opacity="0.9"/>
+      <text x="15%" y="192" font-size="12" fill="#1a1a2e" font-weight="600">80 (7.0%)</text>
+      <text x="0" y="220" font-size="11" fill="#6b7280">EU技术部</text>
+      <rect x="0" y="226" width="18%" height="22" rx="4" fill="#8b5cf6" opacity="0.9"/>
+      <text x="20%" y="242" font-size="12" fill="#1a1a2e" font-weight="600">115 (10.1%)</text>
+      <text x="0" y="270" font-size="11" fill="#6b7280">其他(HR/CS/终端/ND等)</text>
+      <rect x="0" y="274" width="43%" height="22" rx="4" fill="#6b7280" opacity="0.6"/>
+      <text x="45%" y="290" font-size="12" fill="#1a1a2e" font-weight="600">292 (25.7%)</text>
+    </svg>
+  </div>
+  <div class="chart-card">
+    <h3>编制状态 <span class="badge">vacancy</span></h3>
+    <svg viewBox="0 0 400 280" style="width:100%; height:auto;">
+      <!-- Stacked bar by region -->
+      <text x="0" y="20" font-size="11" fill="#6b7280">FR法国 311</text>
+      <rect x="0" y="26" width="72%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="72%" y="26" width="27%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+      <text x="72%" y="40" font-size="11" fill="#1a1a2e">27%空</text>
+
+      <text x="0" y="60" font-size="11" fill="#6b7280">IT意大利 172</text>
+      <rect x="0" y="66" width="69%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="69%" y="66" width="29%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+      <text x="69%" y="80" font-size="11" fill="#1a1a2e">29%空</text>
+
+      <text x="0" y="100" font-size="11" fill="#6b7280">NL荷兰 168</text>
+      <rect x="0" y="106" width="66%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="66%" y="106" width="33%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+      <text x="66%" y="120" font-size="11" fill="#1a1a2e">33%空</text>
+
+      <text x="0" y="140" font-size="11" fill="#6b7280">ES西班牙 80</text>
+      <rect x="0" y="146" width="10%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="10%" y="146" width="83%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+      <text x="10%" y="160" font-size="11" fill="#1a1a2e">83%空(新区域)</text>
+
+      <text x="0" y="180" font-size="11" fill="#6b7280">EU技术部 115</text>
+      <rect x="0" y="186" width="91%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="91%" y="186" width="9%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+
+      <text x="0" y="220" font-size="11" fill="#6b7280">EU人力资源 99</text>
+      <rect x="0" y="226" width="69%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="69%" y="226" width="29%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+
+      <text x="0" y="260" font-size="11" fill="#6b7280">CS客服 97</text>
+      <rect x="0" y="266" width="87%" height="20" rx="4" fill="#10b981" opacity="0.8"/>
+      <rect x="87%" y="266" width="13%" height="20" rx="4" fill="#ef4444" opacity="0.8"/>
+    </svg>
+  </div>
+</div>
+
+<!-- Section 2: Position Distribution -->
+<h2 class="section-title">👥 岗位分布与职类构成</h2>
+<div class="chart-grid">
+  <div class="chart-card full">
+    <h3>TOP 15 岗位组别分布 <span class="badge">position</span></h3>
+    <table>
+      <thead><tr><th>岗位组别</th><th>编制数</th><th>占比</th><th>主要ABC分类</th><th>AI替代潜力</th></tr></thead>
+      <tbody>
+        <tr><td>操作员(Warehouse Operator)</td><td><div class="bar-cell">267 <div class="bar bar-blue" style="width:267px;"></div></div></td><td>23.5%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-red">🔴 高</span></td></tr>
+        <tr><td>终端专员/管理</td><td><div class="bar-cell">153 <div class="bar bar-blue" style="width:153px;"></div></div></td><td>13.4%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+        <tr><td>客服专员(CS)</td><td><div class="bar-cell">95 <div class="bar bar-blue" style="width:95px;"></div></div></td><td>8.3%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-red">🔴 高</span></td></tr>
+        <tr><td>质量管理(QM)</td><td><div class="bar-cell">74 <div class="bar bar-blue" style="width:74px;"></div></div></td><td>6.5%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+        <tr><td>操作管理类</td><td><div class="bar-cell">47 <div class="bar bar-blue" style="width:47px;"></div></div></td><td>4.1%</td><td><span class="tag tag-red">C</span> / <span class="tag tag-amber">B</span></td><td><span class="tag tag-green">🟢 低</span></td></tr>
+        <tr><td>HR(全类别)</td><td><div class="bar-cell">91 <div class="bar bar-blue" style="width:91px;"></div></div></td><td>8.0%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+        <tr><td>Java工程师</td><td><div class="bar-cell">34 <div class="bar bar-blue" style="width:34px;"></div></div></td><td>3.0%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中高(AI辅助编码)</span></td></tr>
+        <tr><td>行政/采购</td><td><div class="bar-cell">44 <div class="bar bar-blue" style="width:44px;"></div></div></td><td>3.9%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中高</span></td></tr>
+        <tr><td>数据分析</td><td><div class="bar-cell">22 <div class="bar bar-blue" style="width:22px;"></div></div></td><td>1.9%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+        <tr><td>测试工程师</td><td><div class="bar-cell">18 <div class="bar bar-blue" style="width:18px;"></div></div></td><td>1.6%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中高</span></td></tr>
+        <tr><td>运输管理/调度</td><td><div class="bar-cell">46 <div class="bar bar-blue" style="width:46px;"></div></div></td><td>4.0%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+        <tr><td>仓库管理(Hub)</td><td><div class="bar-cell">24 <div class="bar bar-blue" style="width:24px;"></div></div></td><td>2.1%</td><td><span class="tag tag-red">C</span> / <span class="tag tag-amber">B</span></td><td><span class="tag tag-green">🟢 低</span></td></tr>
+        <tr><td>管理培训生</td><td><div class="bar-cell">26 <div class="bar bar-blue" style="width:26px;"></div></div></td><td>2.3%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-green">🟢 低</span></td></tr>
+        <tr><td>产品经理</td><td><div class="bar-cell">15 <div class="bar bar-blue" style="width:15px;"></div></div></td><td>1.3%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中(AI辅助需求分析)</span></td></tr>
+        <tr><td>IT支持</td><td><div class="bar-cell">25 <div class="bar bar-blue" style="width:25px;"></div></div></td><td>2.2%</td><td><span class="tag tag-red">C</span></td><td><span class="tag tag-amber">🟡 中</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 3: AI Substitution Four-Quadrant Framework -->
+<h2 class="section-title">🤖 AI替代性四象限分析框架</h2>
+<div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px;">
+  <div style="writing-mode:vertical-lr; font-size:14px; font-weight:600; color:var(--sub); letter-spacing:2px; height:200px; display:flex; align-items:center;">专业度要求高 →</div>
+  <div style="flex:1;">
+    <div class="quadrant" style="grid-template-rows:1fr auto 1fr; grid-template-columns:1fr auto 1fr;">
+      <!-- Top-left: Q2 (High Quality, High Repeat) - Partial AI assist -->
+      <div class="q-cell q2" style="grid-column:1; grid-row:1;">
+        <h4>🟡 Q2 · 人机协作区</h4>
+        <div class="score">专业度⬆ 重复度⬆ | AI部分替代</div>
+        <ul>
+          <li><span class="pos-name">数据分析专员</span><span class="headcount">22人</span></li>
+          <li><span class="pos-name">质量管理(QM)</span><span class="headcount">74人</span></li>
+          <li><span class="pos-name">测试工程师</span><span class="headcount">18人</span></li>
+          <li><span class="pos-name">风控管理</span><span class="headcount">14人</span></li>
+          <li><span class="pos-name">精益管理</span><span class="headcount">13人</span></li>
+          <li><span class="pos-name">采购专员</span><span class="headcount">13人</span></li>
+          <li><span class="pos-name">HR-SSC/招聘</span><span class="headcount">52人</span></li>
+          <li><span class="pos-name">Java/Web/产品经理</span><span class="headcount">63人</span></li>
+        </ul>
+      </div>
+
+      <!-- Top-axis label -->
+      <div style="grid-column:2; grid-row:1; writing-mode:vertical-lr; text-align:center; font-size:12px; font-weight:600; color:var(--sub); padding:8px; display:flex; align-items:center; justify-content:center;">
+        重复度低 ←
+      </div>
+
+      <!-- Top-right: Q1 (High Quality, Low Repeat) - Hard to replace -->
+      <div class="q-cell q1" style="grid-column:3; grid-row:1;">
+        <h4>🟢 Q1 · 人脑核心区</h4>
+        <div class="score">专业度⬆ 重复度⬇ | AI几乎不可替代</div>
+        <ul>
+          <li><span class="pos-name">高层管理(GM/VP)</span><span class="headcount">3人</span></li>
+          <li><span class="pos-name">区域管理</span><span class="headcount">15人</span></li>
+          <li><span class="pos-name">HR-BP</span><span class="headcount">32人</span></li>
+          <li><span class="pos-name">架构师/解决方案</span><span class="headcount">13人</span></li>
+          <li><span class="pos-name">战略经营</span><span class="headcount">10人</span></li>
+          <li><span class="pos-name">仓库管理(Hub/Station)</span><span class="headcount">42人</span></li>
+          <li><span class="pos-name">操作管理类(组长/主管)</span><span class="headcount">47人</span></li>
+        </ul>
+      </div>
+
+      <!-- Left-axis label -->
+      <div style="grid-column:1; grid-row:2; text-align:center; font-size:12px; font-weight:600; color:var(--sub); padding:8px;">
+        专业度要求低 ←→ 专业度要求高
+      </div>
+      <div style="grid-column:2; grid-row:2;"></div>
+      <div style="grid-column:3; grid-row:2; text-align:center; font-size:12px; font-weight:600; color:var(--sub); padding:8px;">
+        → 专业度要求高
+      </div>
+
+      <!-- Bottom-left: Q3 (Low Quality, Low Repeat) - Moderate -->
+      <div class="q-cell q3" style="grid-column:1; grid-row:3;">
+        <h4>🔵 Q3 · 技能提升区</h4>
+        <div class="score">专业度⬇ 重复度⬇ | AI辅助+再培训</div>
+        <ul>
+          <li><span class="pos-name">管理培训生</span><span class="headcount">26人</span></li>
+          <li><span class="pos-name">品牌公关</span><span class="headcount">10人</span></li>
+          <li><span class="pos-name">HR-其他类</span><span class="headcount">30人</span></li>
+          <li><span class="pos-name">前端/Web工程师</span><span class="headcount">10人</span></li>
+          <li><span class="pos-name">UI设计</span><span class="headcount">1人</span></li>
+          <li><span class="pos-name">项目管理</span><span class="headcount">5人</span></li>
+        </ul>
+      </div>
+
+      <!-- Bottom-axis label -->
+      <div style="grid-column:2; grid-row:3; writing-mode:vertical-lr; text-align:center; font-size:12px; font-weight:600; color:var(--sub); padding:8px; display:flex; align-items:center; justify-content:center;">
+        重复度高 →
+      </div>
+
+      <!-- Bottom-right: Q4 (Low Quality, High Repeat) - Easy to replace -->
+      <div class="q-cell q4" style="grid-column:3; grid-row:3;">
+        <h4>🔴 Q4 · 快速替代区</h4>
+        <div class="score">专业度⬇ 重复度⬆ | AI可大规模替代</div>
+        <ul>
+          <li><span class="pos-name">操作员(Warehouse Op)</span><span class="headcount">267人</span></li>
+          <li><span class="pos-name">客服专员(CS)</span><span class="headcount">95人</span></li>
+          <li><span class="pos-name">终端寻源专员</span><span class="headcount">17人</span></li>
+          <li><span class="pos-name">行政专员/助理</span><span class="headcount">31人</span></li>
+          <li><span class="pos-name">销售支持</span><span class="headcount">13人</span></li>
+          <li><span class="pos-name">运维(非核心)</span><span class="headcount">18人</span></li>
+          <li><span class="pos-name">操作支持</span><span class="headcount">10人</span></li>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="writing-mode:vertical-lr; font-size:14px; font-weight:600; color:var(--sub); letter-spacing:2px; height:200px; display:flex; align-items:center;">→ 重复度高</div>
+</div>
+
+<!-- Section 4: AI Substitution Potential Summary -->
+<h2 class="section-title">📋 AI替代潜力量化评估</h2>
+<div class="chart-grid">
+  <div class="chart-card full">
+    <h3>按岗位组的AI替代潜力排名 <span class="badge">impact</span></h3>
+    <table>
+      <thead><tr><th>替代等级</th><th>岗位组</th><th>总编制</th><th>占总编制%</th><th>潜在节约FTE</th><th>替代策略</th><th>时间窗口</th></tr></thead>
+      <tbody>
+        <tr style="background:#fee2e2;">
+          <td><span class="tag tag-red">🔴 高</span></td>
+          <td>操作员(Warehouse Operator)</td><td>267</td><td>23.5%</td><td>≥200</td>
+          <td>自动化仓储/AMR机器人/AI调度</td><td>1-3年</td>
+        </tr>
+        <tr style="background:#fee2e2;">
+          <td><span class="tag tag-red">🔴 高</span></td>
+          <td>客服专员(CS)</td><td>95</td><td>8.3%</td><td>≥60</td>
+          <td>AI Chatbot/智能工单/自助服务</td><td>6-12月</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中高</span></td>
+          <td>行政专员/助理</td><td>31</td><td>2.7%</td><td>15-20</td>
+          <td>RPA/AI行政助手</td><td>1-2年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中高</span></td>
+          <td>测试工程师</td><td>18</td><td>1.6%</td><td>8-12</td>
+          <td>AI测试/Auto-Testing</td><td>1-2年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中高</span></td>
+          <td>销售支持</td><td>13</td><td>1.1%</td><td>6-8</td>
+          <td>CRM自动化/AI报价</td><td>1-2年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中高</span></td>
+          <td>终端寻源专员</td><td>17</td><td>1.5%</td><td>8-10</td>
+          <td>AI寻源/数据匹配</td><td>1-2年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中</span></td>
+          <td>HR-SSC/招聘</td><td>52</td><td>4.6%</td><td>20-25</td>
+          <td>AI面试/智能筛选/自助查询</td><td>1-3年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中</span></td>
+          <td>质量管理(QM)</td><td>74</td><td>6.5%</td><td>20-30</td>
+          <td>AI质检/数据分析辅助</td><td>2-3年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中</span></td>
+          <td>数据分析</td><td>22</td><td>1.9%</td><td>5-10</td>
+          <td>AI分析工具/BI自动化</td><td>1-2年</td>
+        </tr>
+        <tr style="background:#fef3c7;">
+          <td><span class="tag tag-amber">🟡 中</span></td>
+          <td>Java/Web/产品</td><td>63</td><td>5.5%</td><td>20-30</td>
+          <td>AI辅助编码(AI Copilot/Cursor) + AI产品分析</td><td>1-3年</td>
+        </tr>
+        <tr style="background:#dbeafe;">
+          <td><span class="tag tag-green">🟢 极低</span></td>
+          <td>高层管理/区域管理</td><td>18</td><td>1.6%</td><td>&lt;5</td>
+          <td>AI决策支持(不可替代)</td><td>5年+</td>
+        </tr>
+        <tr style="background:#dbeafe;">
+          <td><span class="tag tag-green">🟢 极低</span></td>
+          <td>HR-BP</td><td>32</td><td>2.8%</td><td>&lt;5</td>
+          <td>AI辅助（不可替代）</td><td>5年+</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px; padding:12px; background:#f0fdf4; border-radius:8px; font-size:13px;">
+      <strong>📐 估算逻辑</strong>：按岗位重复度 ≥70% 且专业度要求 ≤ 中级（P2以下）为"高替代"，用C类占比+重复操作特征推算替代比例30%-80%
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: Vacancy Heat Map -->
+<h2 class="section-title">🔥 空编热点与招聘优先级</h2>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>空编TOP 10 <span class="badge">urgent</span></h3>
+    <svg viewBox="0 0 400 280" style="width:100%; height:auto;">
+      <text x="0" y="20" font-size="12" fill="#1a1a2e" font-weight="600">操作员(Warehouse Operator)</text>
+      <rect x="0" y="26" width="85%" height="18" rx="4" fill="#ef4444" opacity="0.8"/>
+      <text x="87%" y="40" font-size="11" fill="#ef4444" font-weight="600">116</text>
+
+      <text x="0" y="60" font-size="12" fill="#1a1a2e" font-weight="600">管理培训生(MT)</text>
+      <rect x="0" y="66" width="18%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="20%" y="80" font-size="11" fill="#f59e0b">24</text>
+
+      <text x="0" y="100" font-size="12" fill="#1a1a2e">终端专员</text>
+      <rect x="0" y="106" width="23%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="25%" y="120" font-size="11">33</text>
+
+      <text x="0" y="140" font-size="12" fill="#1a1a2e">数据分析专员</text>
+      <rect x="0" y="146" width="5%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="7%" y="160" font-size="11">7</text>
+
+      <text x="0" y="180" font-size="12" fill="#1a1a2e">站长(Station Head)</text>
+      <rect x="0" y="186" width="6%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="8%" y="200" font-size="11">8</text>
+
+      <text x="0" y="220" font-size="12" fill="#1a1a2e">操作组长</text>
+      <rect x="0" y="226" width="7%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="9%" y="240" font-size="11">10</text>
+
+      <text x="0" y="260" font-size="12" fill="#1a1a2e">副仓长/仓长</text>
+      <rect x="0" y="266" width="4%" height="18" rx="4" fill="#f59e0b"/>
+      <text x="6%" y="280" font-size="11">8</text>
+    </svg>
+  </div>
+  <div class="chart-card">
+    <h3>⚠️ 关键发现 <span class="badge">insights</span></h3>
+    <div style="font-size:13px; line-height:1.8;">
+      <p><strong>1. ES西班牙区严重空编</strong><br>
+      80个编制仅8人在职，空缺率83%<br>
+      建议：优先招聘本地团队+AI自动化补充</p>
+      <p style="margin-top:12px;"><strong>2. 操作员空缺116人</strong><br>
+      占总空编35%，影响仓库运营效率<br>
+      建议：推进AMR机器人+AI调度系统</p>
+      <p style="margin-top:12px;"><strong>3. 管理培训生空编24人</strong><br>
+      说明人才培养Pipeline不足<br>
+      建议：启动管培生招聘计划</p>
+      <p style="margin-top:12px;"><strong>4. 终端专员空编33人</strong><br>
+      法国/意大利/荷兰均有短缺<br>
+      建议：引入AI终端管理平台</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 6: Management Recommendations -->
+<h2 class="section-title">💡 管理建议与落地方案</h2>
+<div class="kpi-group">
+  <div class="kpi-card" style="border-left: 4px solid var(--red);">
+    <div class="title">立即行动（0-6月）</div>
+    <div class="value" style="font-size:18px;">客服+采购AI化</div>
+    <div class="desc">客服AI Chatbot上线 · 采购RPA<br>释放约 60-80 个FTE</div>
+  </div>
+  <div class="kpi-card" style="border-left: 4px solid var(--amber);">
+    <div class="title">短期计划（6-12月）</div>
+    <div class="value" style="font-size:18px;">仓储自动化试点</div>
+    <div class="desc">法国巴黎枢纽仓引入AMR · AI调度<br>减少操作员依赖 20-30%</div>
+  </div>
+  <div class="kpi-card" style="border-left: 4px solid var(--accent);">
+    <div class="title">中期战略（1-3年）</div>
+    <div class="value" style="font-size:18px;">组织重塑+技能升级</div>
+    <div class="desc">员工从操作转岗为AI运维/管理<br>全员AI素养培训计划</div>
+  </div>
+</div>
+
+<div class="chart-card full" style="margin-bottom:20px;">
+  <h3>🎯 按岗位的具体管理建议</h3>
+  <table>
+    <thead><tr><th>岗位组</th><th>建议策略</th><th>预计影响</th><th>风险等级</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>操作员(267人)</strong></td>
+        <td>• 巴黎/米兰/阿姆斯特丹仓库引入AMR + AI调度系统<br>• 操作员转型为"机器人协管员"<br>• 新建编暂停，优先用AI填补</td>
+        <td>3年内减少50%操作员编制</td>
+        <td><span class="tag tag-amber">中（资本投入大）</span></td>
+      </tr>
+      <tr>
+        <td><strong>客服专员(95人)</strong></td>
+        <td>• 部署AI多语言客服（法语/意大利语/荷兰语/西班牙语）<br>• 仅保留复杂投诉（升级）人工处理<br>• 客服专员转型为"AI训练师"</td>
+        <td>12月内释放60%客服FTA</td>
+        <td><span class="tag tag-green">低（技术成熟）</span></td>
+      </tr>
+      <tr>
+        <td><strong>HR全类别(91人)</strong></td>
+        <td>• AI面试筛选（适合招聘类）<br>• HR-SSC自助平台 + AI问答Bot<br>• HR-BP保留（不可替代）<br>• 招聘类岗位可减少30%编制</td>
+        <td>释放约20-25个HR编制</td>
+        <td><span class="tag tag-green">低</span></td>
+      </tr>
+      <tr>
+        <td><strong>数据分析(22人)</strong></td>
+        <td>• 部署BI自助分析平台（Tableau/Power BI + AI）<br>• 数据分析师升级为"数据策略师"<br>• 生成式AI自动生成周报/月报</td>
+        <td>效率提升3-5倍</td>
+        <td><span class="tag tag-green">低</span></td>
+      </tr>
+      <tr>
+        <td><strong>质量管理(74人)</strong></td>
+        <td>• AI视觉质检系统<br>• 实时异常检测 + 自动派单<br>• QM专员转型为"质量分析师"</td>
+        <td>12月内效率提升40%</td>
+        <td><span class="tag tag-amber">中（系统集成复杂）</span></td>
+      </tr>
+      <tr>
+        <td><strong>测试工程师(18人)</strong></td>
+        <td>• AI自动化测试框架<br>• AI生成测试用例<br>• 保留复杂场景人工验证</td>
+        <td>释放60%测试工作</td>
+        <td><span class="tag tag-green">低</span></td>
+      </tr>
+      <tr>
+        <td><strong>行政/采购(44人)</strong></td>
+        <td>• RPA自动化：报销、审批、合同管理<br>• AI采购比价系统<br>• 供应商管理数字化</td>
+        <td>释放约20个编制</td>
+        <td><span class="tag tag-green">低</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Section 7: Additional Strategic Insights -->
+<h2 class="section-title">🔮 隐藏洞察（你可能没想到的）</h2>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>1️⃣ 编制ABC分类揭示组织能力结构</h3>
+    <svg viewBox="0 0 400 200" style="width:100%; height:auto;">
+      <!-- Pie-like representation -->
+      <circle cx="130" cy="100" r="80" fill="none" stroke="#e5e7eb" stroke-width="20"/>
+      <circle cx="130" cy="100" r="80" fill="none" stroke="#ef4444" stroke-width="20" stroke-dasharray="504 113" stroke-dashoffset="0" transform="rotate(-90 130 100)"/>
+      <circle cx="130" cy="100" r="80" fill="none" stroke="#f59e0b" stroke-width="20" stroke-dasharray="54 563" stroke-dashoffset="-504" transform="rotate(-90 130 100)"/>
+      <circle cx="130" cy="100" r="80" fill="none" stroke="#10b981" stroke-width="20" stroke-dasharray="9 608" stroke-dashoffset="-558" transform="rotate(-90 130 100)"/>
+      <text x="130" y="95" text-anchor="middle" font-size="24" font-weight="700" fill="#ef4444">89%</text>
+      <text x="130" y="115" text-anchor="middle" font-size="10" fill="#6b7280">C类</text>
+      <text x="280" y="70" font-size="12" fill="#10b981">● A类 18 (1.6%)</text>
+      <text x="280" y="95" font-size="12" fill="#f59e0b">● B类 108 (9.5%)</text>
+      <text x="280" y="120" font-size="12" fill="#ef4444">● C类 1,012 (88.9%)</text>
+      <text x="280" y="150" font-size="11" fill="#6b7280">C类占比过高</text>
+      <text x="280" y="168" font-size="11" fill="#6b7280">组织能力结构失衡</text>
+    </svg>
+    <div style="font-size:13px; line-height:1.7; padding:8px;">
+      <strong>洞察</strong>：89%岗位为C类（低复杂度），说明GEU当前以执行型劳动力为主，组织能力金字塔底座过宽。AI自动化后可大幅优化。
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>2️⃣ 跨国差异化战略</h3>
+    <div style="font-size:13px; line-height:1.8; padding:8px;">
+      <p><strong>🇫🇷 法国 (311人)</strong>：最大市场，操作员+终端占比57%。<br>
+      建议优先自动化试点。</p>
+      <p style="margin-top:8px;"><strong>🇮🇹 意大利 (172人)</strong>：结构与法国相似。<br>
+      建议复制法国自动化方案。</p>
+      <p style="margin-top:8px;"><strong>🇳🇱 荷兰 (168人)</strong>：管培生较多(10人)。<br>
+      建议强化AI人才培养。</p>
+      <p style="margin-top:8px;"><strong>🇪🇸 西班牙 (80人)</strong>：在职仅8人！空编率83%。<br>
+      建议直接跳过传统招聘，用AI+自动化一步到位</p>
+    </div>
+  </div>
+  <div class="chart-card full">
+    <h3>3️⃣ 你可能没意识到的问题</h3>
+    <div style="font-size:13px; line-height:1.8; padding:8px;">
+      <p>🔸 <strong>Java/Web/产品经理想法修正</strong>：你说得对。AI编码工具（GitHub Copilot、Cursor、Devin）已经在替代中级Java开发的工作，产品经理的需求文档和原型设计也可被AI大量辅助。这63人应归入Q2人机协作区而非Q1。</p>
+      <p>🔸 <strong>操作员替代≠纯AI，需要硬件机器人</strong>：操作员替代的核心是AMR（自主移动机器人）+ 机械臂 + AI调度系统的组合，不是纯软件AI。资本投入成本约€50-80K/台AMR，但ROI通常在18-24个月回本。</p>
+      <p>🔸 <strong>"管理培训生"模式需要反思</strong>：26个MT编制中24个空编。如果AI能替代执行层，MT的培养路径（从执行做起）需要重新设计。</p>
+      <p>🔸 <strong>数据孤岛风险</strong>：22个数据分析分散在不同部门（FR IT NL ES等），说明没有统一数据平台。先做数据基座，再做AI替代。</p>
+      <p>🔸 <strong>供应商管理（TM终端）153人</strong>：是目前第二大群体。终端管理的核心是供应商巡检/评分/寻源，大部分可被AI驱动的供应商管理系统替代。</p>
+      <p>🔸 <strong>西班牙的"白纸机会"</strong>：80个编制仅8人在职。与其艰难招聘，不如设计"AI优先"组织架构——这是一种难得的机会。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 8: Expanded Management Recommendations -->
+<h2 class="section-title">📋 补充管理建议（按维度展开）</h2>
+
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>📌 组织设计维度</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议1：重新定义C类岗位</strong><br>
+      • 89%为C类 = 组织抗风险能力弱<br>
+      • 新增"AI管控师/AI协管员"岗位族<br>
+      • 每减少10个操作员，增加1个AI协管员</p>
+      <p style="margin-top:10px;"><strong>建议2：矩阵式+敏捷组织</strong><br>
+      • 技术团队（Java/产品/测试）按项目制重组<br>
+      • AI辅助编码后，团队缩编30%，转向AI产品<br>
+      • 建立"AI卓越中心（CoE）"作为共享平台</p>
+      <p style="margin-top:10px;"><strong>建议3：管控幅度优化</strong><br>
+      • AI替代后操作员减少 → 管理岗位也相应缩减<br>
+      • 组长→主管→经理的层级从5层压到3层<br>
+      • 每1个主管管理15-20个AI协管员（而非操作员）</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>💰 成本预算维度</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议4：编制预算 "AI置换" 模型</strong><br>
+      • 330个空编的50% → 直接转为AI/自动化预算<br>
+      • 每个空编成本€30K/年 × 165个空编 ≈ €5M/年<br>
+      • 这是"预算转移"而非"新增预算"</p>
+      <p style="margin-top:10px;"><strong>建议5：分阶段投资路线图</strong><br>
+      • Phase 0（0-6月）：€500K（客服AI+采购RPA）<br>
+      • Phase 1（6-12月）：€1.5M（巴黎AMR试点+AI质检）<br>
+      • Phase 2（1-2年）：€3M（法/意/荷全面自动化）<br>
+      • Phase 3（2-3年）：€2M（西班牙AI优先+ES全境）<br>
+      • 总投资€7M，年化节约€8-12M，18个月回本</p>
+      <p style="margin-top:10px;"><strong>建议6：AMR硬件采购策略</strong><br>
+      • 避免一次性采购，先租后买（leasing）降低CAPEX<br>
+      • 供应商评估：Geek+、Locus、Fetch Robotics<br>
+      • 建议巴黎枢纽仓先租10台试运行3个月</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>👥 人才发展维度</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议7："星火计划" - 员工转岗路径</strong><br>
+      操作员→AI协管员：3个月培训（机器人操作+故障处理）<br>
+      客服→AI训练师：2个月培训（标注+调优+升级处理）<br>
+      QM→质量分析师：4个月培训（数据分析+根因分析）<br>
+      HR招聘→HRBP助理：6个月培训（业务理解+人际技能）</p>
+      <p style="margin-top:10px;"><strong>建议8：全员AI素养认证</strong><br>
+      • L1（全员）：AI工具使用（Copilot/Notion AI等）<br>
+      • L2（白领）：AI prompt engineering + 数据分析<br>
+      • L3（技术）：AI Agent开发 + RAG应用<br>
+      • 强制要求：2027年底前全员完成L1认证</p>
+      <p style="margin-top:10px;"><strong>建议9：关键岗位接班人计划</strong><br>
+      • 随着AI替代，识别"不可替代"岗位的接班人<br>
+      • 高层管理/HR-BP/架构师等设双人选<br>
+      • 管理培训生改向"AI+业务复合人才"培养</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>🌍 区域策略维度</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议10：法国 - 全球标杆试点</strong><br>
+      • 巴黎枢纽仓 → 第一个"灯塔工厂"级智能仓库<br>
+      • 成功后形成标准SOP，复制到IT/NL<br>
+      • 目标：操作员从116人→40人，效率提升3倍</p>
+      <p style="margin-top:10px;"><strong>建议11：西班牙 - "AI原生"组织架构</strong><br>
+      • 不按传统方式招聘80人<br>
+      • 核心编制：1 GM + 3 区域主管 + 5 AI协管员 = 9人<br>
+      • 外包：运输(本地服务商)+ 行政(共享中心) = 等价10人<br>
+      • 总计约19人，剩余61个编制预算转为AI系统资本</p>
+      <p style="margin-top:10px;"><strong>建议12：意大利/荷兰 - 复制优化</strong><br>
+      • 意大利：劳动法极严格，用自然减员替代裁员<br>
+      • 荷兰：管培生资源丰富，可建"AI训练中心"<br>
+      • 注意各国本地化语言要求（AI系统必须支持当地语言）</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>🔧 技术实施维度</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议13：先做数据基座，再做AI应用</strong><br>
+      • 当前22个数据分析分散各地，说明无统一数据平台<br>
+      • 优先搭建统一数据湖/数据中台<br>
+      • 统一数据字典、报表口径、KPI标准</p>
+      <p style="margin-top:10px;"><strong>建议14：AI工具选型矩阵</strong><br>
+      • 客服AI：Zendesk AI / Intercom Fin / 自研RAG<br>
+      • 仓库自动化：Geek+ / Locus Robotics / GreyOrange<br>
+      • 编码辅助：GitHub Copilot / Cursor / Windsurf<br>
+      • 数据分析：Tableau + AI / Power BI Copilot / 自研BI</p>
+      <p style="margin-top:10px;"><strong>建议15：小步快跑，先POC后推广</strong><br>
+      • 每个AI项目先做POC（4-6周验证）<br>
+      • 成功→推广；失败→复盘后换方案<br>
+      • 建议POC队列：客服AI → 采购RPA → AMR → AI质检</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>⚖️ 合规与风险管理</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议16：各国劳动法策略差异化</strong><br>
+      • 🇫🇷 法国：集体协商6-18个月，用"自愿离职+再培训"<br>
+      • 🇮🇹 意大利：第18条保护极强，只停招不加裁员<br>
+      • 🇳🇱 荷兰：必须提供"过渡方案"（转岗/培训/补偿）<br>
+      • 🇪🇸 西班牙：补偿金高，但空编83%所以几乎不用裁</p>
+      <p style="margin-top:10px;"><strong>建议17：工会沟通策略</strong><br>
+      • 不说不说"裁员"（layoff），说"岗位升级"（role upgrade）<br>
+      • 包装成"数字化转型"、"技能提升"、"全球竞争力项目"<br>
+      • 工会最关心就业保障 → 承诺不强制裁员（自然减员+转岗）</p>
+      <p style="margin-top:10px;"><strong>建议18：AI伦理与数据安全</strong><br>
+      • EU AI Act合规要求（2026年已生效）<br>
+      • 员工数据使用需获得同意+透明告知<br>
+      • AI决策必须保留"人类审核"环节（human-in-the-loop）</p>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>📊 监控与复盘机制</h3>
+    <div style="font-size:13px; line-height:1.8; padding:4px;">
+      <p><strong>建议19：AI替代进度仪表盘</strong><br>
+      • 每个季度更新四象限，跟踪岗位实际变化<br>
+      • 核心KPI：<br>
+      &nbsp;&nbsp;→ AI替代率 = 已替代FTE / 目标替代FTE<br>
+      &nbsp;&nbsp;→ 转岗成功率 = 成功转岗人数 / 受影响的员工数<br>
+      &nbsp;&nbsp;→ ROI = 节约成本 / AI系统投入成本<br>
+      &nbsp;&nbsp;→ 员工AI认证通过率</p>
+      <p style="margin-top:10px;"><strong>建议20：每季度"AI替代评审会"</strong><br>
+      • 参会人：HRBP + 运营负责人 + IT + 各国家负责人<br>
+      • 议程：<br>
+      &nbsp;&nbsp;1. 各AI项目进展回顾<br>
+      &nbsp;&nbsp;2. 岗位替代实际VS预期对比<br>
+      &nbsp;&nbsp;3. 员工反馈与工会沟通<br>
+      &nbsp;&nbsp;4. 调整下一季度计划</p>
+      <p style="margin-top:10px;"><strong>建议21：编制预算联动机制</strong><br>
+      • 每个新空缺编制被审批前，先问：<br>
+      &nbsp;&nbsp;→ "这个岗位能否用AI替代？"<br>
+      &nbsp;&nbsp;→ 如果可以 → 不招人，申请AI项目预算<br>
+      &nbsp;&nbsp;→ 如果不可以 → 说明理由，批准招聘<br>
+      • 建立"编制置换审批委员会"</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 9: Q&A for Boss -->
+<h2 class="section-title">💬 老板分享会 · 议题跟进</h2>
+<div class="chart-card full" style="margin-bottom:20px;">
+  <h3>针对老板的AI趋势四象限框架，补充几个深度议题</h3>
+  <div style="font-size:13px; line-height:1.8; padding:8px;">
+    <p><strong>议题1：AI替代不是"失业"，而是"岗位分解"</strong><br>
+    每个岗位=多个任务的组合。AI替代的是一部分任务而非整个岗位。<br>
+    例如：Java工程师的"写CRUD代码"被替代，但"设计架构+代码评审+需求沟通"保留。<br>
+    → 核心行动：对每个岗位做"任务级"分解，识别哪些任务可AI化，哪些保留人工。</p>
+
+    <p style="margin-top:12px;"><strong>议题2：AI替代的时间差 = HR的战略窗口期</strong><br>
+    操作员替代需要硬件机器人（AMR+机械臂）→ 1-3年<br>
+    客服替代只要软件AI Chatbot → 6个月<br>
+    Java开发替代介于两者之间 → 1-2年<br>
+    → 核心行动：按时间差排优先级，先做见效快的（客服），再做投资大的（仓库）</p>
+
+    <p style="margin-top:12px;"><strong>议题3：组织能力结构的"沙漏化"趋势</strong><br>
+    传统组织是金字塔：顶层战略+中层管理+底层执行<br>
+    AI时代→沙漏型：顶层战略(不变)+AI层(新)+少量执行(剩)<br>
+    → 核心行动：开始设计"AI层"的组织架构，定义AI管控师的职责和考核方式</p>
+
+    <p style="margin-top:12px;"><strong>议题4：国别差异 = 天然实验对照组</strong><br>
+    同一个GEU，四个国家四个不同状态：<br>
+    法国（成熟运营+中等空编）、意大利（成熟运营+高法保）、荷兰（中等+管培生多）、西班牙（新市场+几乎空白）<br>
+    → 正好可以做A/B测试：西班牙用AI优先，法国用渐进式，比较3年后的效率差异</p>
+
+    <p style="margin-top:12px;"><strong>议题5："编制置换"财务模型</strong><br>
+    330个空编 × €30K/年 = €9.9M/年的"可动预算池"<br>
+    不用全部填满人，而是"50%填AI系统，30%提升现有员工，20%留在账上"<br>
+    → 这是向老板汇报的财务逻辑：省人 ≠ 省钱，省人+投资AI = 增效+省钱</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="margin-top:32px; padding:16px; background:#f9fafb; border-radius:8px; font-size:12px; color:var(--sub); text-align:center;">
+  本报告由 HR 运营团队 AI 协作生成 · 数据来源：GOFO_编制表20260602 · 2026-06-02<br>
+  四象限分析框架基于：专业度质量要求（纵轴）× 重复度（横轴） · AI替代性评估仅供参考
+</div>
+
+</div>
+</body>
+</html>
